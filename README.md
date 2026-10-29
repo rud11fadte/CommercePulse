@@ -1,363 +1,529 @@
 # CommercePulse
-### A Batch Data Engineering and Analytics Platform
+### End-to-End E-Commerce Data Engineering and Analytics Platform
 
-CommercePulse is a data engineering project built using Python, Pandas, Parquet and PostgreSQL. It processes real-world e-commerce order data, validates data quality, generates monthly order analytics, and loads the results into a PostgreSQL analytics warehouse.
+CommercePulse is an end-to-end data engineering project that processes Brazilian e-commerce order data, validates data quality, generates monthly analytics, stores results in PostgreSQL, and exposes insights through a FastAPI backend and an interactive Streamlit dashboard.
 
-The project uses the Brazilian E-Commerce Public Dataset by Olist and demonstrates an end-to-end batch data pipeline.
+The project uses the publicly available Brazilian E-Commerce Public Dataset by Olist.
 
 ## Project Objectives
 
-- Build a repeatable batch data ingestion pipeline.
-- Implement automated data quality validation.
-- Store processed data in Parquet format.
-- Generate monthly order analytics using Python and Pandas.
-- Load analytical results into PostgreSQL.
-- Automate pipeline execution and test core functionality.
+- Build a reproducible batch data ingestion pipeline.
+- Validate data quality before generating analytics.
+- Transform raw order data into analytical datasets using Pandas.
+- Store monthly analytics in a PostgreSQL data warehouse.
+- Develop REST API endpoints using FastAPI.
+- Visualize order trends and data quality through Streamlit.
+- Containerize the application using Docker and Docker Compose.
+- Implement automated testing for important pipeline components.
 
 ## Architecture
 
 ```text
-Olist CSV Dataset
-       |
-       v
-Data Ingestion
-       |
-       v
-Data Quality Validation
-       |
-       v
-Processed Orders (Parquet)
-       |
-       v
-Monthly Analytics (Pandas)
-       |
-       +----------------------+
-       |                      |
-       v                      v
-Monthly Analytics       Data Quality Report
-   (Parquet)                 (CSV)
-       |
-       v
-PostgreSQL Analytics Warehouse
+                    Olist Raw CSV Dataset
+                             |
+                             v
+                    Data Ingestion
+                             |
+                             v
+                  Data Quality Validation
+                             |
+                             v
+                  Processed Orders (Parquet)
+                             |
+                 +-----------+-----------+
+                 |                       |
+                 v                       v
+         Monthly Analytics         Quality Report
+             (Parquet)                 (CSV)
+                 |
+                 v
+          PostgreSQL Warehouse
+                 |
+                 v
+              FastAPI
+                 |
+                 v
+         Streamlit Dashboard
+
+       Docker Compose orchestrates
+       the application services.
 ```
 
-The pipeline is orchestrated by `run_pipeline.py`.
+The `run_pipeline.py` script coordinates the batch pipeline, while Docker Compose manages PostgreSQL, the pipeline, the API, and the dashboard.
 
 ## Technology Stack
 
 | Technology | Purpose |
 |---|---|
-| Python | Pipeline implementation |
-| Pandas | Data processing and aggregation |
-| PyArrow | Parquet storage support |
-| PostgreSQL | Relational analytics warehouse |
-| Psycopg | Python-to-PostgreSQL connectivity |
-| pytest | Automated testing |
-| Git | Version control |
+| Python | Pipeline and application logic |
+| Pandas | Data transformation and aggregation |
+| PyArrow | Parquet data storage |
+| PostgreSQL | Analytical data warehouse |
+| SQL | Database schema and analytical queries |
+| FastAPI | REST API development |
+| Pydantic | API data validation |
+| Streamlit | Interactive analytics dashboard |
+| Plotly | Interactive visualizations |
+| Requests | API communication from the dashboard |
+| Pytest | Automated testing |
+| HTTPX | API testing |
+| Docker | Application containerization |
+| Docker Compose | Multi-service orchestration |
+| Git and GitHub | Version control and project hosting |
 
 ## Dataset
 
-The project uses the Brazilian E-Commerce Public Dataset by Olist.
+CommercePulse uses the Brazilian E-Commerce Public Dataset by Olist.
 
-The order dataset contains approximately 99,000 records with information such as:
+The dataset contains information about orders placed on the Olist e-commerce platform in Brazil.
 
-- Order ID
-- Customer ID
-- Order status
-- Purchase timestamp
-
-The current dataset contains **99,441 orders**.
-
-Download the original dataset from Kaggle:
-
+**Dataset source:**
 https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce
 
-After downloading and extracting the dataset, place the required CSV files in `data/raw/`. The ingestion pipeline currently uses `olist_orders_dataset.csv`.
+The current pipeline processes the order dataset:
+
+`olist_orders_dataset.csv`
+
+The raw dataset is stored locally and is excluded from Git tracking because of its size.
+
+### Dataset Fields
+
+Important order attributes include:
+
+- `order_id` — Unique identifier for an order.
+- `customer_id` — Identifier for the customer.
+- `order_status` — Current order status.
+- `order_purchase_timestamp` — Timestamp when the order was purchased.
+- `order_approved_at` — Timestamp when the order was approved.
+- `order_delivered_carrier_date` — Timestamp when the order was handed to the carrier.
+- `order_delivered_customer_date` — Timestamp when the order was delivered.
+- `order_estimated_delivery_date` — Estimated delivery timestamp.
 
 ## Project Structure
 
 ```text
 CommercePulse/
-├── data/
-│   ├── raw/
-│   ├── processed/
-│   └── warehouse/
-├── logs/
-├── src/
-│   ├── ingestion/
-│   │   ├── load_orders.py
-│   │   └── ingest_olist_orders.py
-│   ├── processing/
-│   │   └── build_monthly_analytics.py
-│   ├── quality/
-│   │   ├── validate_orders.py
-│   │   └── quality_report.py
-│   └── warehouse/
-│       ├── __init__.py
-│       └── load_monthly_analytics.py
-├── sql/
-├── tests/
-│   ├── test_validate_orders.py
-│   └── test_monthly_analytics.py
-├── run_pipeline.py
-├── requirements.txt
-├── .gitignore
-└── README.md
+|
+|-- app/
+|   |-- dashboard.py
+|
+|-- data/
+|   |-- raw/
+|   |-- processed/
+|   |-- warehouse/
+|
+|-- logs/
+|
+|-- sql/
+|   |-- init.sql
+|
+|-- src/
+|   |-- api/
+|   |   |-- main.py
+|   |
+|   |-- ingestion/
+|   |   |-- load_orders.py
+|   |   |-- ingest_olist_orders.py
+|   |
+|   |-- processing/
+|   |   |-- build_monthly_analytics.py
+|   |
+|   |-- quality/
+|   |   |-- validate_orders.py
+|   |   |-- quality_report.py
+|   |
+|   |-- warehouse/
+|       |-- load_monthly_analytics.py
+|
+|-- tests/
+|   |-- test_validate_orders.py
+|   |-- test_monthly_analytics.py
+|   |-- test_api.py
+|
+|-- .dockerignore
+|-- .env.example
+|-- .gitignore
+|-- Dockerfile
+|-- docker-compose.yml
+|-- requirements.txt
+|-- run_pipeline.py
+|-- README.md
 ```
 
-## Pipeline Workflow
+## Data Engineering Pipeline
+
+CommercePulse implements a batch processing workflow with the following stages.
 
 ### 1. Data Ingestion
 
-Loads the raw Olist order CSV into a Pandas DataFrame and checks the dataset's structure.
+The ingestion module reads the raw Olist order dataset and performs initial checks.
 
-### 2. Data Quality Validation
+Responsibilities include:
 
-Checks for:
+- Loading order records from CSV.
+- Checking required columns.
+- Preparing data for validation.
+- Logging ingestion results.
+- Saving validated orders in Parquet format.
 
-- Missing required columns
-- Missing values in required fields
-- Duplicate order IDs
-- Invalid order statuses
-- Invalid purchase timestamps
-
-If validation fails, the ingestion pipeline stops instead of writing invalid orders to the processed output.
-
-### 3. Processed Data Storage
-
-Validated orders are written to:
+Output:
 
 `data/processed/olist_orders.parquet`
 
-Parquet provides a columnar storage format suitable for analytical processing.
+### 2. Data Quality Validation
 
-### 4. Monthly Analytics
+The validation module checks the order dataset for common data quality problems.
 
-The processing module groups orders by purchase month and order status, calculating the distinct order count for each group.
+Checks include:
+
+- Missing required fields.
+- Duplicate order identifiers.
+- Invalid order statuses.
+- Invalid timestamps.
+- Missing critical identifiers.
+
+The pipeline records validation results and reports data quality errors.
+
+### 3. Monthly Analytics
+
+The processing module groups order records by purchase month and order status.
+
+It calculates the number of orders in each group and produces a monthly analytical dataset.
 
 Output:
 
 `data/warehouse/monthly_order_analytics.parquet`
 
-### 5. Data Quality Reporting
+The current dataset produces 136 monthly and order-status aggregation rows.
 
-The quality reporting module generates metrics covering total rows, unique and duplicate order IDs, missing key values, invalid statuses, invalid timestamps, and validation results.
+### 4. Data Quality Reporting
+
+The quality reporting module generates a CSV report containing important quality metrics, including:
+
+- Total number of rows.
+- Number of unique order identifiers.
+- Duplicate order identifiers.
+- Missing critical values.
+- Invalid statuses.
+- Invalid timestamps.
+- Total validation errors.
+- Overall validation result.
 
 Output:
 
 `data/warehouse/data_quality_report.csv`
 
-### 6. PostgreSQL Warehouse Loading
+### 5. PostgreSQL Warehouse
 
-The warehouse loader reads the monthly analytics Parquet file and inserts its records into the PostgreSQL table `monthly_order_analytics`.
+The warehouse module loads monthly analytics into PostgreSQL.
 
-Existing month-and-status combinations are updated on subsequent runs, avoiding duplicate groups.
+The table `monthly_order_analytics` stores:
 
-## Prerequisites
+- `purchase_month`
+- `order_status`
+- `order_count`
 
-- Python 3.14 or another compatible Python version
-- Ubuntu or WSL2 Ubuntu
-- PostgreSQL
-- Git
+The table uses a composite primary key consisting of `purchase_month` and `order_status`.
 
-The commands below assume the project is run from Ubuntu or WSL2.
+The loading process supports upserts, allowing existing monthly aggregates to be updated when the pipeline is rerun.
 
-## Installation
+### 6. Pipeline Orchestration
 
-Clone the repository and enter the project directory:
+The `run_pipeline.py` script executes the pipeline stages in sequence.
 
-```bash
-git clone https://github.com/rud11fadte/CommercePulse.git
-cd CommercePulse
+It coordinates ingestion and validation, monthly analytics generation, quality reporting, and PostgreSQL loading.
+
+## REST API
+
+CommercePulse uses FastAPI to expose analytical data through REST endpoints.
+
+### Available Endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/health` | Checks API and database health |
+| GET | `/analytics/monthly` | Retrieves monthly order analytics |
+| GET | `/analytics/monthly?month=2017-01` | Filters analytics by month |
+| GET | `/analytics/monthly?status=delivered` | Filters analytics by order status |
+| GET | `/analytics/quality` | Retrieves the data quality report |
+
+Month and status filters can be combined.
+
+### Example Response
+
+A request to `/analytics/monthly` returns a JSON response containing a record count and analytical data.
+
+```json
+{
+  "count": 2,
+  "data": [
+    {
+      "purchase_month": "2017-01",
+      "order_status": "delivered",
+      "order_count": 120
+    },
+    {
+      "purchase_month": "2017-01",
+      "order_status": "shipped",
+      "order_count": 15
+    }
+  ]
+}
 ```
 
-Create and activate a virtual environment:
+The values above are illustrative examples, not the actual query results.
+
+### API Documentation
+
+When the application is running, interactive API documentation is available at:
+
+http://localhost:8000/docs
+
+## Streamlit Analytics Dashboard
+
+CommercePulse includes an interactive dashboard built with Streamlit and Plotly.
+
+The dashboard communicates with the FastAPI backend to retrieve analytical results.
+
+### Dashboard Features
+
+- Monthly and order-status filters.
+- Key performance indicator cards.
+- Monthly order trend visualization.
+- Order counts by status.
+- Data quality monitoring.
+- Validation status and error metrics.
+- Expandable data quality report.
+- Monthly analytics table.
+
+The dashboard provides a convenient interface for exploring the results of the data pipeline without manually querying the database.
+
+### Access the Dashboard
+
+http://localhost:8501
+
+## Docker Deployment
+
+Docker Compose manages the application's services.
+
+| Service | Purpose |
+|---|---|
+| PostgreSQL | Stores monthly analytical aggregates |
+| Pipeline | Runs the batch data processing workflow |
+| FastAPI | Serves analytics and health endpoints |
+| Streamlit | Displays the analytics dashboard |
+
+The PostgreSQL container uses a named Docker volume for persistent database storage.
+
+The raw dataset and generated data are mounted from the local project directory rather than committed to GitHub.
+
+### Prerequisites
+
+- Docker Desktop or Docker Engine with Docker Compose.
+- Git.
+- The Olist order dataset downloaded to the project's `data/raw/` directory.
+
+### Environment Configuration
+
+The repository includes `.env.example` as a template for the database password.
+
+Create your local `.env` file from the project root:
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` and replace the placeholder with a strong, randomly generated password.
+
+Keep `.env` private and never commit it to GitHub.
+
+### Run the Pipeline
+
+Build the image and execute the batch pipeline:
+
+```bash
+docker compose run --build --rm pipeline
+```
+
+### Start the Services
+
+Start PostgreSQL, the API, and the dashboard:
+
+```bash
+docker compose up -d postgres api dashboard
+```
+
+If the pipeline has not been executed yet, run it before using the dashboard.
+
+### Check Running Containers
+
+```bash
+docker compose ps
+```
+
+The pipeline is a one-shot job, so it will not necessarily appear in the running-container list after it finishes.
+
+### View Logs
+
+```bash
+docker compose logs -f postgres api dashboard
+```
+
+### Stop the Services
+
+```bash
+docker compose down
+```
+
+The named PostgreSQL volume is preserved when the containers are stopped this way.
+
+To delete the database volume and its stored data, use the following command only when you intentionally want to reset the database:
+
+```bash
+docker compose down -v
+```
+
+## Local Development
+
+Docker is the recommended way to run the complete application.
+
+For local Python development, create and activate a virtual environment from the project root.
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-```
-
-Install the project dependencies:
-
-```bash
 pip install -r requirements.txt
-pip install "psycopg[binary]"
 ```
 
-Download and extract the Olist dataset, then place `olist_orders_dataset.csv` in `data/raw/`.
-
-## PostgreSQL Setup
-
-Install PostgreSQL if it is not already installed:
+Run the automated tests:
 
 ```bash
-sudo apt update
-sudo apt install postgresql
+pytest -v
 ```
 
-Start the PostgreSQL service:
-
-```bash
-sudo pg_ctlcluster 18 main start
-```
-
-Create the database and analytics table:
-
-```bash
-sudo -u postgres psql
-```
-
-Execute these SQL statements inside the PostgreSQL prompt:
-
-```sql
-CREATE DATABASE commercepulse;
-\c commercepulse
-
-CREATE TABLE monthly_order_analytics (
-    purchase_month VARCHAR(7) NOT NULL,
-    order_status VARCHAR(20) NOT NULL,
-    order_count INTEGER NOT NULL CHECK (order_count >= 0),
-    PRIMARY KEY (purchase_month, order_status)
-);
-
-CREATE USER commercepulse_app WITH PASSWORD 'REPLACE_WITH_A_STRONG_PASSWORD';
-
-GRANT CONNECT ON DATABASE commercepulse TO commercepulse_app;
-GRANT USAGE ON SCHEMA public TO commercepulse_app;
-GRANT SELECT, INSERT, UPDATE
-ON TABLE monthly_order_analytics
-TO commercepulse_app;
-
-\q
-```
-
-Use your own strong database password. Do not commit passwords or connection strings containing credentials to Git.
-
-Configure the database connection in the terminal where you will run the application:
-
-```bash
-read -rsp "Database password: " DB_PASSWORD
-echo
-
-export COMMERCEPULSE_DATABASE_URL="postgresql://commercepulse_app:${DB_PASSWORD}@localhost:5432/commercepulse"
-
-unset DB_PASSWORD
-```
-
-Keep this connection variable available in the terminal while running the pipeline.
-
-## Run the Pipeline
-
-From the project root, run:
+Run the pipeline locally after configuring a reachable PostgreSQL database and setting the required database connection environment variable:
 
 ```bash
 python run_pipeline.py
 ```
 
-The pipeline executes these stages in order:
-
-1. Order ingestion and validation
-2. Monthly analytics generation
-3. Data quality report generation
-4. PostgreSQL warehouse loading
-
-The pipeline stops if a stage fails.
-
-## Run Automated Tests
-
-Execute:
+Start the API locally:
 
 ```bash
-python -m pytest tests/ -v
+uvicorn src.api.main:app --reload
 ```
 
-The current test suite contains **11 tests** covering order validation and monthly analytics.
-
-## Query the Analytics Warehouse
-
-Connect to PostgreSQL:
+Start the dashboard locally in a separate terminal:
 
 ```bash
-sudo -u postgres psql -d commercepulse
+streamlit run app/dashboard.py
 ```
 
-Count the analytical records:
+For local execution, ensure that the API and dashboard configuration points to the correct service URLs and that the PostgreSQL connection settings are configured appropriately.
 
-```sql
-SELECT COUNT(*) AS total_analytics_rows
-FROM monthly_order_analytics;
-```
+## Results and Current Implementation
 
-Inspect monthly order counts:
-
-```sql
-SELECT purchase_month, order_status, order_count
-FROM monthly_order_analytics
-ORDER BY purchase_month, order_status
-LIMIT 10;
-```
-
-Compare order statuses across months:
-
-```sql
-SELECT
-    purchase_month,
-    SUM(order_count) AS total_orders
-FROM monthly_order_analytics
-GROUP BY purchase_month
-ORDER BY purchase_month;
-```
-
-Exit the PostgreSQL prompt with:
-
-```sql
-\q
-```
-
-## Verified Results
-
-During local testing, the project produced the following results:
+The pipeline has been tested against the local Olist order dataset.
 
 | Metric | Result |
 |---|---:|
-| Source orders processed | 99,441 |
-| Monthly analytics groups | 136 |
-| Duplicate order IDs | 0 |
-| Reported validation errors | 0 |
-| Automated tests passed | 11 of 11 |
+| Orders processed | 99,441 |
+| Unique order identifiers | 99,441 |
+| Duplicate order identifiers | 0 |
+| Monthly analytics rows | 136 |
 | PostgreSQL analytics rows | 136 |
+| Validation errors | 0 |
+| Overall validation result | Passed |
 
-These results reflect the dataset and validation checks used during the recorded test runs.
+These results describe the current processed dataset and may change if the source data changes.
 
-## Current Scope and Limitations
+## Testing
 
-CommercePulse currently implements a local batch-processing workflow. It does not yet implement a streaming ingestion system, Kafka integration, distributed Spark processing, dbt transformations, or a web dashboard.
+CommercePulse includes automated tests for core functionality.
 
-The PostgreSQL warehouse currently stores monthly aggregated analytics rather than every source order in a relational fact table.
+### Order Validation Tests
+
+The validation tests cover data quality rules such as missing fields, duplicate identifiers, invalid statuses, and timestamps.
+
+### Monthly Analytics Tests
+
+The analytics tests verify monthly aggregation logic and expected output structure.
+
+### API Tests
+
+The API tests validate endpoint behavior, response structure, and relevant error-handling scenarios.
+
+Run the test suite using:
+
+```bash
+pytest -v
+```
+
+## Security and Data Management
+
+- Database credentials are supplied through environment variables.
+- The local `.env` file is excluded from version control.
+- The PostgreSQL port is bound to the local machine.
+- The raw dataset is excluded from Git tracking.
+- Generated data, logs, and virtual environments are excluded from Git tracking.
+- Docker containers are used to isolate the application services.
+
+For production deployment, additional controls would be required, including authentication, authorization, HTTPS, secrets management, and production-grade monitoring.
+
+## Current Limitations
+
+- The pipeline currently focuses on batch processing rather than real-time streaming.
+- Analytics are based on order counts grouped by purchase month and status.
+- The dashboard depends on the API and the generated analytical data.
+- The current implementation does not include user authentication.
+- The quality report is generated as a local CSV file.
+- The project is designed for educational and demonstration purposes rather than production-scale operations.
 
 ## Future Enhancements
 
-- Add a PostgreSQL fact table for detailed order-level analysis.
-- Add analytical dimensions for customers, products, and sellers.
-- Introduce additional data quality rules and reconciliation checks.
-- Add database integration tests.
-- Add dbt models and documentation.
-- Add a FastAPI backend and interactive analytics dashboard.
-- Add continuous integration using GitHub Actions.
-- Explore streaming and distributed processing where appropriate.
+Potential improvements include:
+
+- Scheduling automated pipeline execution.
+- Adding Apache Airflow for workflow orchestration.
+- Introducing Apache Kafka for event-driven ingestion.
+- Implementing incremental ingestion and processing.
+- Expanding analytics to revenue, delivery performance, and customer behavior.
+- Adding more detailed data quality rules and historical quality tracking.
+- Adding API authentication and role-based access control.
+- Implementing CI/CD with GitHub Actions.
+- Adding automated monitoring and alerting.
+- Deploying the application to a cloud platform.
+
+## Learning Outcomes
+
+This project demonstrates practical experience with:
+
+- Batch data engineering.
+- Data ingestion and transformation.
+- Data quality validation.
+- Columnar storage using Parquet.
+- Relational database design and upserts.
+- REST API development.
+- Interactive analytics dashboards.
+- Automated testing.
+- Containerization and multi-service deployment.
+- Version control and project documentation.
 
 ## Author
 
-**Rudresh Fadate**
+**Rudresh Mahendra Fadate**
 
-MSc Data Science  
-Goa University
+MSc Data Science
+Goa Business School, Goa University
 
 GitHub: https://github.com/rud11fadte
 
-LinkedIn: https://www.linkedin.com/in/rudresh-fadate
+## Acknowledgements
+
+Dataset: Brazilian E-Commerce Public Dataset by Olist.
+
+https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce
 
 ---
 
-*CommercePulse is an academic data engineering project developed for learning and demonstration purposes.*
+CommercePulse — From raw e-commerce data to validated, accessible, and interactive analytics.
