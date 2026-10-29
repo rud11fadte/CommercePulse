@@ -1,5 +1,5 @@
 
-"""CommercePulse: run the complete batch analytics pipeline."""
+"""CommercePulse: execute the complete analytics pipeline."""
 
 import logging
 import subprocess
@@ -7,23 +7,14 @@ import sys
 
 
 PIPELINE_STEPS = [
-    (
-        "Order ingestion and data-quality validation",
-        "src.ingestion.ingest_olist_orders",
-    ),
-    (
-        "Monthly order analytics",
-        "src.processing.build_monthly_analytics",
-    ),
-    (
-        "Data quality report generation",
-        "src.quality.quality_report",
-    ),
+    ("Order ingestion and validation", "src.ingestion.ingest_olist_orders"),
+    ("Monthly analytics generation", "src.processing.build_monthly_analytics"),
+    ("Data quality report generation", "src.quality.quality_report"),
+    ("PostgreSQL warehouse loading", "src.warehouse.load_monthly_analytics"),
 ]
 
 
 def main() -> int:
-    """Execute pipeline steps in order and stop on failure."""
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s | %(levelname)s | %(message)s",
@@ -34,7 +25,7 @@ def main() -> int:
     logger.info("CommercePulse pipeline started")
 
     for step_name, module_name in PIPELINE_STEPS:
-        logger.info("Starting step: %s", step_name)
+        logger.info("Starting: %s", step_name)
 
         result = subprocess.run(
             [sys.executable, "-m", module_name],
@@ -42,15 +33,12 @@ def main() -> int:
         )
 
         if result.returncode != 0:
-            logger.error(
-                "Pipeline stopped because this step failed: %s",
-                step_name,
-            )
+            logger.error("Pipeline failed at: %s", step_name)
             return result.returncode
 
-        logger.info("Completed step: %s", step_name)
+        logger.info("Completed: %s", step_name)
 
-    logger.info("CommercePulse pipeline completed successfully")
+    logger.info("All four pipeline steps completed successfully")
     return 0
 
 
