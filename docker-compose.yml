@@ -35,5 +35,21 @@ services:
     command: ["python", "run_pipeline.py"]
     restart: "no"
 
+  api:
+    build:
+      context: .
+    container_name: commercepulse-api
+    environment:
+      COMMERCEPULSE_DATABASE_URL: postgresql://commercepulse_app:${POSTGRES_PASSWORD}@postgres:5432/commercepulse
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - ./data/warehouse:/app/data/warehouse:ro
+    command: ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
   commercepulse_db:
