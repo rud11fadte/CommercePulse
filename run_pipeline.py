@@ -15,6 +15,10 @@ PIPELINE_STEPS = [
         "Monthly order analytics",
         "src.processing.build_monthly_analytics",
     ),
+    (
+        "Data quality report generation",
+        "src.quality.quality_report",
+    ),
 ]
 
 
