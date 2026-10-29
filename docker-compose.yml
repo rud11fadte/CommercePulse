@@ -51,5 +51,26 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+
+  dashboard:
+    build:
+      context: .
+    container_name: commercepulse-dashboard
+    environment:
+      API_URL: http://api:8000
+    ports:
+      - "127.0.0.1:8501:8501"
+    command:
+      - streamlit
+      - run
+      - app/dashboard.py
+      - --server.address=0.0.0.0
+      - --server.port=8501
+      - --browser.gatherUsageStats=false
+    depends_on:
+      api:
+        condition: service_started
+    restart: unless-stopped
+
 volumes:
   commercepulse_db:

@@ -6,3 +6,6 @@ pydantic
 pytest
 httpx
 psycopg[binary]
+streamlit
+plotly
+requests

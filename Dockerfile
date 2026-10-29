@@ -10,6 +10,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY src/ ./src/
+COPY app/ ./app/
 COPY run_pipeline.py .
 
 RUN mkdir -p data/raw data/processed data/warehouse logs
