@@ -1,0 +1,39 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: commercepulse-postgres
+    environment:
+      POSTGRES_DB: commercepulse
+      POSTGRES_USER: commercepulse_app
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - commercepulse_db:/var/lib/postgresql/data
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U commercepulse_app -d commercepulse"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+    restart: unless-stopped
+
+  pipeline:
+    build:
+      context: .
+    container_name: commercepulse-pipeline
+    environment:
+      COMMERCEPULSE_DATABASE_URL: postgresql://commercepulse_app:${POSTGRES_PASSWORD}@postgres:5432/commercepulse
+    volumes:
+      - ./data/raw:/app/data/raw:ro
+      - ./data/processed:/app/data/processed
+      - ./data/warehouse:/app/data/warehouse
+      - ./logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["python", "run_pipeline.py"]
+    restart: "no"
+
+volumes:
+  commercepulse_db:

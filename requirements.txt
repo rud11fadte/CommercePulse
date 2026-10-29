@@ -1,4 +1,3 @@
-
 pandas
 pyarrow
 fastapi
@@ -6,3 +5,4 @@ uvicorn
 pydantic
 pytest
 httpx
+psycopg[binary]
