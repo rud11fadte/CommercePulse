@@ -1,5 +1,5 @@
 
-"""Automated tests for CommercePulse order validation."""
+"""Automated tests for CommercePulse Olist order validation."""
 
 import pandas as pd
 
@@ -12,16 +12,14 @@ def valid_orders():
             {
                 "order_id": "ORD001",
                 "customer_id": "CUST001",
-                "product_id": "PROD101",
-                "quantity": 2,
-                "unit_price": 499.00,
+                "order_status": "delivered",
+                "order_purchase_timestamp": "2018-01-10 10:00:00",
             },
             {
                 "order_id": "ORD002",
                 "customer_id": "CUST002",
-                "product_id": "PROD102",
-                "quantity": 1,
-                "unit_price": 899.00,
+                "order_status": "shipped",
+                "order_purchase_timestamp": "2018-02-15 12:30:00",
             },
         ]
     )
@@ -40,22 +38,31 @@ def test_duplicate_order_ids_fail():
     assert any("Duplicate order IDs" in error for error in errors)
 
 
-def test_negative_quantity_fails():
+def test_missing_required_value_fails():
     orders = valid_orders()
-    orders.loc[0, "quantity"] = -1
+    orders.loc[0, "customer_id"] = None
 
     errors = validate_orders(orders)
 
-    assert any("Quantity" in error for error in errors)
+    assert any("missing values" in error for error in errors)
 
 
-def test_negative_price_fails():
+def test_invalid_order_status_fails():
     orders = valid_orders()
-    orders.loc[0, "unit_price"] = -10
+    orders.loc[0, "order_status"] = "unknown_status"
 
     errors = validate_orders(orders)
 
-    assert any("Unit price" in error for error in errors)
+    assert any("Invalid order statuses" in error for error in errors)
+
+
+def test_invalid_purchase_timestamp_fails():
+    orders = valid_orders()
+    orders.loc[0, "order_purchase_timestamp"] = "not-a-date"
+
+    errors = validate_orders(orders)
+
+    assert any("purchase timestamps" in error for error in errors)
 
 
 def test_missing_required_column_fails():
