@@ -1,3 +1,4 @@
+
 services:
   postgres:
     image: postgres:17
@@ -50,7 +51,6 @@ services:
       postgres:
         condition: service_healthy
     restart: unless-stopped
-
 
   dashboard:
     build:
