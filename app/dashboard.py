@@ -1,14 +1,12 @@
-
 """CommercePulse — ecommerce analytics dashboard."""
 
-import os
+from pathlib import Path
 
 import pandas as pd
 import plotly.express as px
-import requests
 import streamlit as st
 
-API_URL = os.getenv("API_URL", "http://localhost:8000").rstrip("/")
+DATA_DIR = Path(__file__).parent / "data"
 
 st.set_page_config(
     page_title="CommercePulse",
@@ -19,35 +17,27 @@ st.set_page_config(
 st.title("📊 CommercePulse")
 st.caption("E-commerce data engineering and analytics platform")
 
-@st.cache_data(ttl=60)
+
+@st.cache_data
 def fetch_monthly_analytics():
-    response = requests.get(
-        f"{API_URL}/analytics/monthly",
-        timeout=10,
-    )
-    response.raise_for_status()
-    return response.json()["data"]
+    file_path = DATA_DIR / "monthly_order_analytics.parquet"
+    return pd.read_parquet(file_path)
 
 
-@st.cache_data(ttl=60)
+@st.cache_data
 def fetch_quality_report():
-    response = requests.get(
-        f"{API_URL}/analytics/quality",
-        timeout=10,
-    )
-    response.raise_for_status()
-    return response.json()["report"]
+    file_path = DATA_DIR / "data_quality_report.csv"
+    report_df = pd.read_csv(file_path)
+    return dict(zip(report_df["metric"], report_df["value"].astype(str)))
 
 
 try:
-    monthly_data = fetch_monthly_analytics()
+    df = fetch_monthly_analytics()
     quality = fetch_quality_report()
-except requests.RequestException as exc:
-    st.error(f"Could not connect to the CommercePulse API: {exc}")
-    st.info("Make sure the API is running and accessible.")
+except Exception as exc:
+    st.error(f"Could not load CommercePulse data: {exc}")
+    st.info("Make sure the analytics and quality report files exist in app/data/.")
     st.stop()
-
-df = pd.DataFrame(monthly_data)
 
 if df.empty:
     st.warning("No analytics data is available. Run the data pipeline first.")
@@ -157,9 +147,7 @@ with right:
 st.divider()
 st.subheader("Data quality monitoring")
 
-validation_passed = str(
-    quality.get("validation_passed", "")
-).lower() == "true"
+validation_passed = quality.get("validation_passed", "").lower() == "true"
 
 if validation_passed:
     st.success("Data validation passed")

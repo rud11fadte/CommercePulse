@@ -1,0 +1,11 @@
+metric,value
+total_rows,99441
+unique_order_ids,99441
+duplicate_order_ids,0
+missing_order_ids,0
+missing_customer_ids,0
+missing_order_statuses,0
+invalid_order_statuses,0
+invalid_purchase_timestamps,0
+validation_error_count,0
+validation_passed,True
